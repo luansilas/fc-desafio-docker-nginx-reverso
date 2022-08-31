@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  node:
+    build: 
+      context: ./nodejs
+    image: luansilas/desafio-docker/nodejs
+    entrypoint: dockerize -wait tcp://db:3306 -timeout 20s /usr/local/bin/docker-entrypoint.sh node index.js
+    container_name: node
+    tty: true
+    volumes: 
+      - ./nodejs:/app
+    networks: 
+      - desafio-fc-network
+  nginx: 
+    build: 
+      context: ./nginx
+    image: luansilas/desafio-docker/nginx-proxy
+    container_name: nginx
+    networks: 
+      - desafio-fc-network
+    ports:
+      - 8080:80
+  
+  db:
+    image: mysql:5.7
+    container_name: db
+    command: --innodb-use-native-aio=0
+    restart: always
+    tty: true
+    environment:
+      - MYSQL_DATABASE=nodedb
+      - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - ./mysql:/var/lib/mysql
+    ports:
+      - 3306:3306
+    networks: 
+      - desafio-fc-network
+
+networks:
+  desafio-fc-network:
+    driver: bridge
+
